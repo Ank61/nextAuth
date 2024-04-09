@@ -1,0 +1,32 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:root@localhost:5432/trelloDemo"
+}
+
+model test {
+  brand_id Int     @id @default(autoincrement())
+  brand    String?
+}
+
+model Users {
+  email  String @id @unique
+  boards Boards[]
+}
+
+model Boards {
+  id        String @id @default(cuid())
+  title     String @unique
+  workspace String
+  emails    Users  @relation(fields: [email], references: [email])
+  email     String 
+}
