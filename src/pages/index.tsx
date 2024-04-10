@@ -2,7 +2,8 @@ import { useSession, signIn, signOut } from "next-auth/react"
 import React, { useEffect } from "react"
 import { Icons } from "@/components/icons";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
+
 
 export default function Home() {
   //AUthOpen

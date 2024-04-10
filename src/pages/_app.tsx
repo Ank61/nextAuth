@@ -2,6 +2,13 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { SessionProvider } from "next-auth/react"
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import {
+  RecoilRoot,
+  atom,
+  selector,
+  useRecoilState,
+  useRecoilValue,
+} from 'recoil';
 export default function App({
   Component,
   pageProps: { session, ...pageProps },
@@ -10,7 +17,9 @@ export default function App({
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider session={session}>
-        <Component {...pageProps} />
+        <RecoilRoot>
+          <Component {...pageProps} />
+        </RecoilRoot>
       </SessionProvider>
     </QueryClientProvider>
   )

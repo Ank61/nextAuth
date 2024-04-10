@@ -19,6 +19,7 @@
     "@trpc/server": "^10.45.2",
     "cuid": "^3.0.0",
     "express": "^4.19.2",
+    "framer-motion": "^11.0.25",
     "lucide-react": "^0.363.0",
     "next": "14.1.4",
     "next-auth": "^4.24.7",
@@ -31,6 +32,7 @@
     "react-dom": "^18",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.22.3",
+    "recoil": "^0.7.7",
     "redis": "^4.6.13",
     "zod": "^3.22.4"
   },

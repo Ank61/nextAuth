@@ -22,7 +22,8 @@ import { boardCreationSchema, titleSchema } from "@/validators/board";
 import { json } from "stream/consumers";
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/router';
-
+import { useRecoilState } from "recoil";
+import { analytics } from "@/global/boardAnalytics";
 
 
 
