@@ -310,6 +310,11 @@ searchInput:hover {
   text-transform: unset !important;
   font-weight: 600;
 }
+
+.MuiTab-label {
+  text-transform: lowercase !important;
+}
+
 /* 
 .scrollbar {
   margin-left: 30px;
