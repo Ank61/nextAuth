@@ -9,6 +9,9 @@ import { Switch } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { blue, pink } from '@mui/material/colors';
 import { alpha } from '@mui/material/styles';
+import { LogOut } from 'lucide-react';
+import { useSession, signIn, signOut } from "next-auth/react"
+import { useRouter } from 'next/navigation';
 
 const PinkSwitch = styled(Switch)(({ theme }) => ({
     width: 54,
@@ -30,6 +33,7 @@ const PinkSwitch = styled(Switch)(({ theme }) => ({
 
 export default function Sidebar() {
     const [analyticsOn, setAnalyticsOn] = useRecoilState(analytics);
+    const router = useRouter()
     return (
         <div className="w-2/12 flex flex-col border pl-4 " style={{ height: '92vh' }}>
             <div className="flex p-2 justify-left mt-6">
@@ -50,6 +54,13 @@ export default function Sidebar() {
             </div>
             <div className="flex p-2 justify-center text-sm font-sans mt-1">
                 <div className='font-medium	 pt-2'>Board Analytics</div> <PinkSwitch className="ml-4" checked={analyticsOn} onChange={() => setAnalyticsOn(!analyticsOn)} />
+            </div>
+            <div className="flex p-2 justify-left mt-auto mb-4 cursor-pointer" onClick={async ()=>{
+                await signOut({ redirect: false, callbackUrl: "/" });
+                router.push('/');
+            }}>
+                <hr></hr>
+                <LogOut size={20} color="#42a5f5" className='mr-4' />Sign Out
             </div>
         </div>
     )

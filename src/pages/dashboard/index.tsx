@@ -48,7 +48,7 @@ export default function Dashboard() {
     const response: any = await fetch("http://localhost:3000/api/routes/board/fetch");
     const allBoards = await response.json();
     console.log("Response from the ", allBoards);
-    setBoards(allBoards.result)
+    setBoards(allBoards.boards)
   }
 
   const handleClickOpen = () => {
@@ -118,7 +118,7 @@ export default function Dashboard() {
           <hr className="w-full h-px my-8 bg-gray-200 border-0 dark:bg-gray-700"></hr>
 
           <div className="grid grid-cols-4 gap-4 mt-4">
-            {boards?.map((item: any, index: any) => <div className="w-4/6 text-center p-8 cursor-pointer rounded-lg font-medium	font-sans text-white subpixel-antialiased" style={{ backgroundColor: '#39b4fc' }} key={index} onClick={() => handleBoard(item.title)}>{item.title}</div>)}
+            {boards?.map((item: any, index: any) => <div className="w-4/6 text-center p-8 cursor-pointer rounded-lg font-medium	font-sans text-white subpixel-antialiased" style={{ backgroundColor: '#39b4fc' }} key={index} onClick={() => handleBoard(item.boardName)}>{item.boardName}</div>)}
           </div>
 
         </div>

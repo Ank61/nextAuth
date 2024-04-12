@@ -16,7 +16,8 @@ export default function Home() {
   //React-Query:
   const dataSaved = async (emailObject: String) => {
     const addEmail = {
-      email: emailObject
+      email: emailObject,
+      OAuth  : true
     }
     console.log("Sending request : ", addEmail)
     const response = await fetch('http://localhost:3000/api/routes/users', {

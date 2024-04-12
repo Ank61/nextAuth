@@ -7,15 +7,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log("Coming ", req.body);
         await connectDB()
         const newUser = new User({
-            email: req.body.email
+            email: req.body.auth?.email,
+            password : req.body.auth?.password
         });
         const savedUser = await newUser.save();
 
         console.log("Response", savedUser);
 
-        return res.send("Email inserted");
+        return res.send({message : 'sucess'});
     } catch (error) {
         console.error("Error:", error);
-        return res.status(500).send("Error inserting email");
+        return res.status(500).send({message : 'fail'});
     }
 }

@@ -111,13 +111,7 @@ CustomTabPanel.propTypes = {
 export default function BoardName() {
     const [commitLogs, setCommitLogs] = useState<CommitLogs[]>([]);
     const [commitColor, setCommitColor] = useState("")
-    const [cards, setCards] = useState([{
-        cardName: "Stuff to Try (this is a list)",
-        items: [{ title: "Swipe left or right to see other lists on this board." }],
-    }, {
-        cardName: "Try it ( Another Board )",
-        items: [{ title: "Done with this board? Tap Archive board in the board settings menu to close it." }, { title: "Tap and hold a card to pick it up and move it. Try it now!" }, { title: "Create as many cards as you want, we've got an unlimited supply!" }, { title: "Tap this card to open it and see more details." }, { title: "Start using Trello!" }],
-    }]);
+    const [cards, setCards] = useState<any[]>([]);
     const [selectedLog, setSelectedLog] = useState<any>([])
     const [analyticsOn, setAnalyticsOn] = useRecoilState(analytics);
     const [picked, setPicked] = useState<any>({});
@@ -126,6 +120,18 @@ export default function BoardName() {
     const [commitLogIndex, setCommitLogsIndex] = useState<any>();
     const [discardingCommit, setDiscardingLogs] = useState<String[]>([]);
     const [tabValue, setTabValue] = React.useState(0);
+
+    useEffect(() => {
+        //fetch
+        fetchBoards()
+    }, []);
+
+    const fetchBoards = async () => {
+        const response: any = await fetch("http://localhost:3000/api/routes/board/fetch");
+        const allBoards = await response.json();
+        console.log("Response from the ", allBoards.boards[0].cards);
+        setCards(allBoards.boards[0].cards)
+    }
 
     const handleChangeTab = (event: any, newValue: any) => {
         setTabValue(newValue);
@@ -208,7 +214,7 @@ export default function BoardName() {
                     insertItem.items.push({ title: e.title.title });
                 }
                 if (e.toCard === insertItem.cardName) {
-                    const indexfound: any = insertItem.items.findIndex((item) => item.title === e.title.title)
+                    const indexfound: any = insertItem.items.findIndex((item:any) => item.title === e.title.title)
                     insertItem.items.splice(indexfound, 1);
                 }
             });
@@ -218,7 +224,7 @@ export default function BoardName() {
         setDiscardingLogs([]);
     }
 
-    const handleKeep = ()=>{
+    const handleKeep = () => {
         setDiscardingLogs([]);
     }
     return (
@@ -226,7 +232,7 @@ export default function BoardName() {
             <div className="flex flex-row w-full" >
                 <Sidebar />
                 <div className="w-full min-h-screen" style={{ backgroundColor: '#a5deff' }}>
-                    <div className="grid grid-cols-5 gap-4 pt-4 pl-7 ">
+                    <div className="grid gap-4 grid-cols-3 lg:grid-cols-5  pt-4 pl-7 ">
                         {cards?.map((elements: any, index: any) =>
                             <>
                                 <div id="dropStarting" key={index} onDrop={() => handleDropped(elements, index)} onDragOver={(event) => allowDrag(event)} className="flex justify-center items-center flex-col w-5/6 h-fit bg-white rounded-lg">
@@ -242,9 +248,9 @@ export default function BoardName() {
                                     </div>
                                 </div>
                             </>)}
-                        <div className="flex justify-center items-center w-fit h-fit font-sans text-sm pl-8  pr-8 pt-2 pb-2 font-medium text-white rounded-lg" style={{ backgroundColor: '#00a1ff' }}>
+                        {/* <div className="flex justify-center items-center w-fit h-fit font-sans text-sm pl-8  pr-8 pt-2 pb-2 font-medium text-white rounded-lg" style={{ backgroundColor: '#00a1ff' }}>
                             <Plus size={19} className="mr-3" />   Add Another List
-                        </div>
+                        </div> */}
                         {analyticsOn ? <motion.div
                             className="relative flex items-center overflow-auto flex-col w-full h-fit bg-white  rounded-lg mx-auto"
                             animate={analyticsOn ? "open" : "closed"}
@@ -262,7 +268,7 @@ export default function BoardName() {
                                 <CustomTabPanel value={tabValue} index={0}  >
                                     <div className="relative flex items-center overflow-auto flex-col w-full h-fit bg-white  rounded-lg">
                                         {discardingCommit.length > 0 ? <motion.div animate={{ y: 6 }} className="flex  mb-4" transition={{ type: "spring", duration: 1 }}>
-                                            <motion.div onClick={()=>handleKeep()} whileHover={{ scale: 1.1 }} className="rounded-lg text-xs flex cursor-pointer mr-10"><BookCheck color="#00a1ff" size={18} className="mr-2" /> <span className="pt-0.5">Keep</span> </motion.div>
+                                            <motion.div onClick={() => handleKeep()} whileHover={{ scale: 1.1 }} className="rounded-lg text-xs flex cursor-pointer mr-10"><BookCheck color="#00a1ff" size={18} className="mr-2" /> <span className="pt-0.5">Keep</span> </motion.div>
                                             <motion.div onClick={() => deleteCommit()} whileHover={{ scale: 1.1 }} className="text-xs flex cursor-pointer "><Trash color="#ef0b60" size={18} className="mr-2" /> <span className="pt-0.5">Remove</span> </motion.div>
                                         </motion.div> : <div className=" mb-4"></div>}
                                         <div className="flex flex-cols">

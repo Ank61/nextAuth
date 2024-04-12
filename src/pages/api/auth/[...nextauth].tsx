@@ -31,11 +31,22 @@ export const authOptions = {
             // @ts-ignore
             async authorize(credentials: any) {
                 const { email, password }: any = credentials;
-                if (email === 'ankit' && password === 'ankit') {
-                    return true;
-                } else {
-                    return null;
+                const response = await fetch('http://localhost:3000/api/routes/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ auth: { email, password } })
+                })
+                if (!response.ok) {
+                   return false
                 }
+                return true;
+                // if (email === 'ankit' && password === 'ankit') {
+                //     return true;
+                // } else {
+                //     return null;
+                // }
             }
         }),
     ],
