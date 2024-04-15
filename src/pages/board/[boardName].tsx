@@ -120,25 +120,48 @@ export default function BoardName() {
     const [commitLogIndex, setCommitLogsIndex] = useState<any>();
     const [discardingCommit, setDiscardingLogs] = useState<String[]>([]);
     const [tabValue, setTabValue] = React.useState(0);
+    const [boardKey, setBoardKey] = useState();
+    const [logs , setLogs] = useState<any>([])
 
     useEffect(() => {
-        //fetch
         fetchBoards()
     }, []);
+
+    useEffect(()=>{
+        fetchLogs()
+    },[cards])
 
     const fetchBoards = async () => {
         const response: any = await fetch("http://localhost:3000/api/routes/board/fetch");
         const allBoards = await response.json();
-        console.log("Response from the ", allBoards.boards[0].cards);
         setCards(allBoards.boards[0].cards)
+        setBoardKey(allBoards.boards[0]._id)
+        const responses: any = await fetch("http://localhost:3000/api/routes/logs",{
+            method : 'POST',
+            body : JSON.stringify({boardId : allBoards.boards[0]._id})
+        });
+        const data = await responses.json();
+        console.log(data)
     }
 
+    const fetchLogs = async()=>{
+        const body = {
+            boardId : boardKey
+        }
+        const response: any = await fetch("http://localhost:3000/api/routes/logs",{
+            method : 'POST',
+            body : JSON.stringify(body)
+        });
+        const allBoards = await response.json();
+        console.log(allBoards[0]?.history)
+        setLogs(allBoards[0]?.history)
+    }
     const handleChangeTab = (event: any, newValue: any) => {
         setTabValue(newValue);
     };
     let rIndex: number;
 
-    const handleDropped = (recievedElements: any, index: any) => {
+    const handleDropped = async (recievedElements: any, index: any) => {
         cards.map(item => {
             if (item.cardName === picked) {
                 //Delete the element
@@ -164,6 +187,17 @@ export default function BoardName() {
         }
         setCommitLogs((prev) => [...prev, log])
         setCards([...cards]);
+        //Request to redis
+        const bordInfo = {
+            boardKey: boardKey,
+            boardData: { data: cards, time: new Date() },
+        }
+        const response: any = await fetch("http://localhost:3000/api/routes/cache", {
+            method: 'POST',
+            body: JSON.stringify(bordInfo)
+        });
+        console.log("CAche Response", response);
+        return
     }
 
     const handleDragStart = (element: any, index: any, ele: any) => {
@@ -214,7 +248,7 @@ export default function BoardName() {
                     insertItem.items.push({ title: e.title.title });
                 }
                 if (e.toCard === insertItem.cardName) {
-                    const indexfound: any = insertItem.items.findIndex((item:any) => item.title === e.title.title)
+                    const indexfound: any = insertItem.items.findIndex((item: any) => item.title === e.title.title)
                     insertItem.items.splice(indexfound, 1);
                 }
             });
@@ -227,6 +261,7 @@ export default function BoardName() {
     const handleKeep = () => {
         setDiscardingLogs([]);
     }
+
     return (
         <div> <Header />
             <div className="flex flex-row w-full" >
@@ -258,7 +293,7 @@ export default function BoardName() {
                         // id="style-6"
                         >
                             <div className="font-sans font-sans font-medium mb-1 mt-2" style={{ backgroundColor: '#ffffff' }}>Board Logs</div>
-                            <Box sx={{ width: '100%', alignItems: 'center' }} >
+                            {/* <Box sx={{ width: '100%', alignItems: 'center' }} >
                                 <Box sx={{}}>
                                     <Tabs centered value={tabValue} onChange={handleChangeTab} style={{ fontFamily: 'sans-serif', fontWeight: 600 }}>
                                         <Tab sx={{ textTransform: "none", fontWeight: 500 }} style={{ fontWeight: 600, fontFamily: 'sans-serif', letterSpacing: 1 }} label="Activity Tracking" {...a11yProps(0)} className="text-xs font-medium" />
@@ -310,7 +345,47 @@ export default function BoardName() {
                                 <CustomTabPanel value={tabValue} index={1} >
                                     Nothing to display
                                 </CustomTabPanel>
-                            </Box>
+                            </Box> */}
+                            <div className="relative flex items-center overflow-auto flex-col w-full h-fit bg-white  rounded-lg">
+                                {discardingCommit.length > 0 ? <motion.div animate={{ y: 6 }} className="flex  mb-4" transition={{ type: "spring", duration: 1 }}>
+                                    <motion.div onClick={() => handleKeep()} whileHover={{ scale: 1.1 }} className="rounded-lg text-xs flex cursor-pointer mr-10"><BookCheck color="#00a1ff" size={18} className="mr-2" /> <span className="pt-0.5">Keep</span> </motion.div>
+                                    <motion.div onClick={() => deleteCommit()} whileHover={{ scale: 1.1 }} className="text-xs flex cursor-pointer "><Trash color="#ef0b60" size={18} className="mr-2" /> <span className="pt-0.5">Remove</span> </motion.div>
+                                </motion.div> : <div className=" mb-4"></div>}
+                                <div className="flex flex-cols">
+                                    <div className="mt-4 force-overflow pb-10">
+                                        {commitLogs?.slice().reverse().map((item: any, index: number) =>
+                                            <motion.div
+                                                key={index}
+                                                // style={discardingCommit.includes(item.commitId) ? { backgroundColor: '#ffd3df' } : {}}
+                                                animate={{ y: 6 }}
+                                                transition={{ type: "spring" }}
+                                            >
+                                                <LightTooltip title=
+                                                    {<div>
+                                                        <Typography className="font-sans text-sm" style={{ backgroundColor: '#ffffff', color: 'black' }}><span className="text-sm font-sans font-semibold mr-2" style={{ color: `${item.color}` }}>From Card:</span> {item.fromCard} </Typography>
+                                                        <Typography className="font-sans font-sans text-sm" style={{ backgroundColor: '#ffffff' }}><span className="text-sm font-semibold  mr-2 font-sans" style={{ color: `${item.color}` }}>To Card:</span>  {item.toCard}</Typography>
+                                                        <Typography className="font-sans font-sans text-sm" style={{ backgroundColor: '#ffffff' }}>
+                                                            <span style={{ color: `${item.color}` }} className=" font-sans font-semibold mr-2 text-sm">Title:</span>  {item.title.title}</Typography>
+                                                    </div>}
+                                                    className="cursor-pointer" placement="right" arrow>
+                                                    <motion.div whileTap={{ scale: 0.8 }} whileHover={{ scale: 1.2 }}
+                                                        onHoverStart={e => { }}
+                                                        onHoverEnd={e => { }} onClick={() => handleCommit(index, item)} key={index} className={`z-10 w-4 h-4 rounded-full `}
+                                                        style={discardingCommit.includes(item.commitId) ? { backgroundColor: '#ef0b60' } : { backgroundColor: item.color }}
+                                                    >
+                                                    </motion.div>
+                                                </LightTooltip>
+                                                <motion.div
+                                                    transition={{ type: "spring", duration: 5 }} className="z-0 ml-1.5 border w-0 h-10 border-slate-300" style={discardingCommit.includes(item.commitId) ? { borderColor: '#ef0b60' } : {}}></motion.div>
+                                            </motion.div>
+                                        )}
+                                    </div>
+                                    <div className="mt-4">
+                                        {commitLogs?.slice().reverse()?.map((item: any, index: number) => <motion.div animate={{ y: 6 }}
+                                            transition={{ type: "spring" }} style={discardingCommit.includes(item.commitId) ? { color: '#ef0b60' } : {}} key={index} className="text-xs ml-7 w-fit h-14 ">{item.time}</motion.div>)}
+                                    </div>
+                                </div>
+                            </div>
                         </motion.div> : null}
                     </div>
                 </div>

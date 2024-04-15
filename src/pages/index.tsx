@@ -46,7 +46,7 @@ export default function Home() {
         console.error('Sign-in failed:', result.error);
       } else {
         //Query to save
-        console.log("Reached")
+        router.push('/dashboard')
       }
     } catch (error: any) {
       console.error('Error:', error.message);

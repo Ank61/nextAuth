@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
     email: { type: String, unique: true, required: true },
-    password : {type : String }
+    password: { type: String }
 });
 
 const boardSchema = new mongoose.Schema({
@@ -11,7 +11,7 @@ const boardSchema = new mongoose.Schema({
     members: [{ type: String }],
     cards: [{
         cardName: { type: String, required: true },
-        items: [{ title : {type : String} }]
+        items: [{ title: { type: String } }]
     }],
     logs: [{ type: String }]
 });
@@ -22,7 +22,10 @@ const cardInfoSchema = new mongoose.Schema({
 });
 
 const boardLogSchema = new mongoose.Schema({
-    logs: { type: String, required: true },
+    history: [{
+        logs: { type: String },
+        time: { type: String }
+    }],
     BoardLogsN: { type: mongoose.Schema.Types.ObjectId, ref: 'Board' }
 });
 

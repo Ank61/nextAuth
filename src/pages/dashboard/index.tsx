@@ -47,7 +47,6 @@ export default function Dashboard() {
   const fetchBoards = async () => {
     const response: any = await fetch("http://localhost:3000/api/routes/board/fetch");
     const allBoards = await response.json();
-    console.log("Response from the ", allBoards);
     setBoards(allBoards.boards)
   }
 
