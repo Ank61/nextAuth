@@ -23,8 +23,12 @@ const cardInfoSchema = new mongoose.Schema({
 
 const boardLogSchema = new mongoose.Schema({
     history: [{
-        logs: { type: String },
-        time: { type: String }
+        logs: [{
+            cardName: { type: String, },
+            items: [{ title: { type: String } }]
+        }],
+        time: { type: String },
+        changedData: { type: String }
     }],
     BoardLogsN: { type: mongoose.Schema.Types.ObjectId, ref: 'Board' }
 });

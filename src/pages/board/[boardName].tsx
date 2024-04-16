@@ -19,8 +19,8 @@ import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import { Trash } from 'lucide-react';
 import { BookCheck } from 'lucide-react';
-
-
+import { createClient } from 'redis';
+import { ScanSearch } from 'lucide-react';
 
 interface CommitLogs {
     commitId: String,
@@ -121,41 +121,46 @@ export default function BoardName() {
     const [discardingCommit, setDiscardingLogs] = useState<String[]>([]);
     const [tabValue, setTabValue] = React.useState(0);
     const [boardKey, setBoardKey] = useState();
-    const [logs , setLogs] = useState<any>([])
+    const [logs, setLogs] = useState<any>([]);
+    const [logDisplay, setLogDisplay] = useState(false)
+
 
     useEffect(() => {
-        fetchBoards()
+        fetchBoards();
     }, []);
 
-    useEffect(()=>{
+    useEffect(() => {
         fetchLogs()
-    },[cards])
+    }, [cards])
 
     const fetchBoards = async () => {
         const response: any = await fetch("http://localhost:3000/api/routes/board/fetch");
         const allBoards = await response.json();
         setCards(allBoards.boards[0].cards)
         setBoardKey(allBoards.boards[0]._id)
-        const responses: any = await fetch("http://localhost:3000/api/routes/logs",{
-            method : 'POST',
-            body : JSON.stringify({boardId : allBoards.boards[0]._id})
+        const responses: any = await fetch("http://localhost:3000/api/routes/logs", {
+            method: 'POST',
+            body: JSON.stringify({ boardId: allBoards.boards[0]._id })
         });
         const data = await responses.json();
         console.log(data)
+        // const cache: any = await fetch("http://localhost:3000/api/routes/subscribe");
+        // console.log('cache',cache)
     }
 
-    const fetchLogs = async()=>{
+    const fetchLogs = async () => {
         const body = {
-            boardId : boardKey
+            boardId: boardKey
         }
-        const response: any = await fetch("http://localhost:3000/api/routes/logs",{
-            method : 'POST',
-            body : JSON.stringify(body)
+        const response: any = await fetch("http://localhost:3000/api/routes/logs", {
+            method: 'POST',
+            body: JSON.stringify(body)
         });
         const allBoards = await response.json();
-        console.log(allBoards[0]?.history)
+        console.log("Board Logs :", allBoards[0]?.history)
         setLogs(allBoards[0]?.history)
     }
+
     const handleChangeTab = (event: any, newValue: any) => {
         setTabValue(newValue);
     };
@@ -188,15 +193,20 @@ export default function BoardName() {
         setCommitLogs((prev) => [...prev, log])
         setCards([...cards]);
         //Request to redis
+        const loggged = JSON.stringify(log)
+        console.log("Sending ...", loggged)
         const bordInfo = {
             boardKey: boardKey,
-            boardData: { data: cards, time: new Date() },
+            boardData: { data: cards, time: new Date(), changedData: loggged },
         }
         const response: any = await fetch("http://localhost:3000/api/routes/cache", {
             method: 'POST',
             body: JSON.stringify(bordInfo)
         });
-        console.log("CAche Response", response);
+        const logs = await response.json();
+        await fetchLogs()
+        // setLogDisplay(true)
+        console.log("CAche Response", logs);
         return
     }
 
@@ -287,66 +297,13 @@ export default function BoardName() {
                             <Plus size={19} className="mr-3" />   Add Another List
                         </div> */}
                         {analyticsOn ? <motion.div
-                            className="relative flex items-center overflow-auto flex-col w-full h-fit bg-white  rounded-lg mx-auto"
+                            className="relative flex pb-6 items-center overflow-auto flex-col w-full h-fit bg-white  rounded-lg mx-auto"
                             animate={analyticsOn ? "open" : "closed"}
                             variants={variants}
                         // id="style-6"
                         >
-                            <div className="font-sans font-sans font-medium mb-1 mt-2" style={{ backgroundColor: '#ffffff' }}>Board Logs</div>
-                            {/* <Box sx={{ width: '100%', alignItems: 'center' }} >
-                                <Box sx={{}}>
-                                    <Tabs centered value={tabValue} onChange={handleChangeTab} style={{ fontFamily: 'sans-serif', fontWeight: 600 }}>
-                                        <Tab sx={{ textTransform: "none", fontWeight: 500 }} style={{ fontWeight: 600, fontFamily: 'sans-serif', letterSpacing: 1 }} label="Activity Tracking" {...a11yProps(0)} className="text-xs font-medium" />
-                                        <Tab sx={{ textTransform: "none" }} label="Card Metrics" style={{ fontWeight: 600, fontFamily: 'sans-serif', letterSpacing: 1 }} {...a11yProps(1)} className="text-xs font-medium" />
-                                    </Tabs>
-                                </Box>
-                                <CustomTabPanel value={tabValue} index={0}  >
-                                    <div className="relative flex items-center overflow-auto flex-col w-full h-fit bg-white  rounded-lg">
-                                        {discardingCommit.length > 0 ? <motion.div animate={{ y: 6 }} className="flex  mb-4" transition={{ type: "spring", duration: 1 }}>
-                                            <motion.div onClick={() => handleKeep()} whileHover={{ scale: 1.1 }} className="rounded-lg text-xs flex cursor-pointer mr-10"><BookCheck color="#00a1ff" size={18} className="mr-2" /> <span className="pt-0.5">Keep</span> </motion.div>
-                                            <motion.div onClick={() => deleteCommit()} whileHover={{ scale: 1.1 }} className="text-xs flex cursor-pointer "><Trash color="#ef0b60" size={18} className="mr-2" /> <span className="pt-0.5">Remove</span> </motion.div>
-                                        </motion.div> : <div className=" mb-4"></div>}
-                                        <div className="flex flex-cols">
-                                            <div className="mt-4 force-overflow pb-10">
-                                                {commitLogs?.slice().reverse().map((item: any, index: number) =>
-                                                    <motion.div
-                                                        key={index}
-                                                        // style={discardingCommit.includes(item.commitId) ? { backgroundColor: '#ffd3df' } : {}}
-                                                        animate={{ y: 6 }}
-                                                        transition={{ type: "spring" }}
-                                                    >
-                                                        <LightTooltip title=
-                                                            {<div>
-                                                                <Typography className="font-sans text-sm" style={{ backgroundColor: '#ffffff', color: 'black' }}><span className="text-sm font-sans font-semibold mr-2" style={{ color: `${item.color}` }}>From Card:</span> {item.fromCard} </Typography>
-                                                                <Typography className="font-sans font-sans text-sm" style={{ backgroundColor: '#ffffff' }}><span className="text-sm font-semibold  mr-2 font-sans" style={{ color: `${item.color}` }}>To Card:</span>  {item.toCard}</Typography>
-                                                                <Typography className="font-sans font-sans text-sm" style={{ backgroundColor: '#ffffff' }}>
-                                                                    <span style={{ color: `${item.color}` }} className=" font-sans font-semibold mr-2 text-sm">Title:</span>  {item.title.title}</Typography>
-                                                            </div>}
-                                                            className="cursor-pointer" placement="right" arrow>
-                                                            <motion.div whileTap={{ scale: 0.8 }} whileHover={{ scale: 1.2 }}
-                                                                onHoverStart={e => { }}
-                                                                onHoverEnd={e => { }} onClick={() => handleCommit(index, item)} key={index} className={`z-10 w-4 h-4 rounded-full `}
-                                                                style={discardingCommit.includes(item.commitId) ? { backgroundColor: '#ef0b60' } : { backgroundColor: item.color }}
-                                                            >
-                                                            </motion.div>
-                                                        </LightTooltip>
-                                                        <motion.div
-                                                            transition={{ type: "spring", duration: 5 }} className="z-0 ml-1.5 border w-0 h-10 border-slate-300" style={discardingCommit.includes(item.commitId) ? { borderColor: '#ef0b60' } : {}}></motion.div>
-                                                    </motion.div>
-                                                )}
-                                            </div>
-                                            <div className="mt-4">
-                                                {commitLogs?.slice().reverse()?.map((item: any, index: number) => <motion.div animate={{ y: 6 }}
-                                                    transition={{ type: "spring" }} style={discardingCommit.includes(item.commitId) ? { color: '#ef0b60' } : {}} key={index} className="text-xs ml-7 w-fit h-14 ">{item.time}</motion.div>)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CustomTabPanel>
-                                <CustomTabPanel value={tabValue} index={1} >
-                                    Nothing to display
-                                </CustomTabPanel>
-                            </Box> */}
-                            <div className="relative flex items-center overflow-auto flex-col w-full h-fit bg-white  rounded-lg">
+                            <div className="font-sans font-sans font-medium mb-1 mt-2 pb-4" style={{ backgroundColor: '#ffffff' }}>Board Logs</div>
+                            {/* <div className="relative flex items-center overflow-auto flex-col w-full h-fit bg-white  rounded-lg">
                                 {discardingCommit.length > 0 ? <motion.div animate={{ y: 6 }} className="flex  mb-4" transition={{ type: "spring", duration: 1 }}>
                                     <motion.div onClick={() => handleKeep()} whileHover={{ scale: 1.1 }} className="rounded-lg text-xs flex cursor-pointer mr-10"><BookCheck color="#00a1ff" size={18} className="mr-2" /> <span className="pt-0.5">Keep</span> </motion.div>
                                     <motion.div onClick={() => deleteCommit()} whileHover={{ scale: 1.1 }} className="text-xs flex cursor-pointer "><Trash color="#ef0b60" size={18} className="mr-2" /> <span className="pt-0.5">Remove</span> </motion.div>
@@ -385,7 +342,41 @@ export default function BoardName() {
                                             transition={{ type: "spring" }} style={discardingCommit.includes(item.commitId) ? { color: '#ef0b60' } : {}} key={index} className="text-xs ml-7 w-fit h-14 ">{item.time}</motion.div>)}
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
+
+                            {logs || logs?.length > 0 ?
+                                logs?.slice(-3).reverse()?.map((log: any, index: any) => {
+                                    const formatTime = format(log.time, "dd/MM/yyyy HH:mm a");
+                                    const parsedLogs = JSON.parse(log.changedData);
+                                    const filteredData = JSON.parse(parsedLogs)
+                                    console.log(filteredData)
+                                    // setLogDisplay(true)
+                                    return (<motion.div key={index} className="relative flex items-center overflow-auto flex-col w-full h-fit bg-white rounded-lg"
+                                        // animate={logDisplay ? "open" : "closed"}
+                                        // variants={variants}
+                                    >
+                                        <div className="flex flex-row w-5/6">
+                                            <div className="mr-4 h-max ">
+                                                <div className="w-8 h-8 bg-teal-500 rounded-2xl"><div className="text-white font-medium text-xs pl-2 pt-2">AN</div></div>
+                                                <div className="w-0.5 h-36 bg-slate-300 ml-3.5"></div>
+                                            </div>
+                                            <div className="w-full text-sm font-sans font-medium">
+                                                Ankit Chohan
+                                                <div className="text-xs font-sans font-normal text-slate-500">{formatTime}</div>
+                                                <div className="w-full h-fit text-xs font-normal bg-slate-200 rounded-lg mt-4 p-2">
+                                                    <div className="mb-1"><span className="font-medium mr-2">From  :</span> {filteredData.fromCard}</div>
+                                                    <div className="mb-1"><span className="font-medium mr-2">To  :</span> {filteredData.toCard}</div>
+                                                    <div className="mb-1"><span className="font-medium mr-2">Change :</span> {filteredData?.title?.title}</div>
+                                                </div>
+                                            </div>
+                                            <div className="ml-auto">
+                                                <ScanSearch color="#11a8ff" size={20} />
+                                            </div>
+                                        </div>
+                                    </motion.div>)
+                                }) : null}
+                            {logs ? logs.length > 3 ? <button className="loadMore"> Load More
+                            </button> : null : null}
                         </motion.div> : null}
                     </div>
                 </div>
